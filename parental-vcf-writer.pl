@@ -11,8 +11,9 @@ use autodie;
 use feature 'say';
 use Vcf;
 
-my $par1_id = "R500";
-my $par2_id = "IMB211";
+my $par1_id     = "R500";
+my $par2_id     = "IMB211";
+my @chromosomes = qw(A01 A02 A03 A04 A05 A06 A07 A08 A09 A10);
 
 my $vcf_out = Vcf->new();
 $vcf_out->add_columns($par1_id);
@@ -48,7 +49,6 @@ open my $vcf_fh, ">", "output.vcf";
 print $vcf_fh $vcf_out->format_header();
 
 my %db;
-my @chromosomes = qw(A01 A02 A03 A04 A05 A06 A07 A08 A09 A10);
 for my $chr (@chromosomes) {
     open my $polydb_fh, "<", "snp_master/polyDB.$chr.nr";
     my $header = <$polydb_fh>;
@@ -70,8 +70,8 @@ for my $chr (@chromosomes) {
         }
     }
 
-    my $par1_file = "genotyped/R500.$chr.genotyped.nr";
-    my $par2_file = "genotyped/IMB211.$chr.genotyped.nr";
+    my $par1_file = "genotyped/$par1_id.$chr.genotyped.nr";
+    my $par2_file = "genotyped/$par2_id.$chr.genotyped.nr";
     open my $par1_fh, "<", $par1_file;
     open my $par2_fh, "<", $par2_file;
 
