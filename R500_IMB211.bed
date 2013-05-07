@@ -1,1 +1,1 @@
-type=vcfTabix name="R500 x IMB211 polymorphisms" visibility=full bigDataUrl=https://github.com/mfcovington/vcf-generator/blob/develop/R500_IMB211.vcf.gz
+type=vcfTabix name="R500 x IMB211 polymorphisms" visibility=full bigDataUrl="https://github.com/mfcovington/vcf-generator/blob/develop/R500_IMB211.vcf.gz"
