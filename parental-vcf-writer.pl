@@ -17,6 +17,7 @@ my $par2_id     = "IMB211";
 my @chromosomes = qw(A01 A02 A03 A04 A05 A06 A07 A08 A09 A10);
 my $fa          = "B.rapa_genome_sequence_0830.fa";
 my $cov_min     = 4;
+my $directory   = ".";
 
 my $vcf_out = Vcf->new();
 $vcf_out->add_columns($par1_id);
@@ -60,12 +61,12 @@ $vcf_out->add_header_line(
         Description => "Total Depth"
     }
 );
-open my $vcf_fh, ">", "output.vcf";
+open my $vcf_fh, ">", "$directory/output.vcf";
 print $vcf_fh $vcf_out->format_header();
 
 my %db;
 for my $chr (@chromosomes) {
-    open my $polydb_fh, "<", "snp_master/polyDB.$chr.nr";
+    open my $polydb_fh, "<", "$directory/snp_master/polyDB.$chr.nr";
     my $header = <$polydb_fh>;
     while (<$polydb_fh>) {
         my ( $chr_id, $pos, $ref, $alt, $genotype ) = split /\t/, $_;
@@ -85,8 +86,8 @@ for my $chr (@chromosomes) {
         }
     }
 
-    my $par1_file = "genotyped/$par1_id.$chr.genotyped.nr";
-    my $par2_file = "genotyped/$par2_id.$chr.genotyped.nr";
+    my $par1_file = "$directory/genotyped/$par1_id.$chr.genotyped.nr";
+    my $par2_file = "$directory/genotyped/$par2_id.$chr.genotyped.nr";
     open my $par1_fh, "<", $par1_file;
     open my $par2_fh, "<", $par2_file;
 
