@@ -16,6 +16,7 @@ my $par1_id     = "R500";
 my $par2_id     = "IMB211";
 my @chromosomes = qw(A01 A02 A03 A04 A05 A06 A07 A08 A09 A10);
 my $fa          = "B.rapa_genome_sequence_0830.fa";
+my $cov_min     = 4;
 
 my $vcf_out = Vcf->new();
 $vcf_out->add_columns($par1_id);
@@ -102,6 +103,7 @@ for my $chr (@chromosomes) {
         $out{FILTER} = ['.'];
         my $par1_depth  = $db{$chr}{$pos}{"$par1_id.par1"};
         my $par2_depth  = $db{$chr}{$pos}{"$par2_id.par2"};
+        next if $par1_depth < $cov_min || $par2_depth < $cov_min;
         my $total_depth = $par1_depth + $par2_depth;
         $out{INFO} = { DP => $total_depth };
         $out{FORMAT} = [ 'GT', 'DP' ];
