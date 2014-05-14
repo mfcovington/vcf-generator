@@ -1,3 +1,8 @@
 snp_master
 genotyped
 output.vcf
+repro-archive/
+*.fa
+*.fai
+*.vcf
+*.vcf.gz
