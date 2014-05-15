@@ -11,13 +11,23 @@ use autodie;
 use Log::Reproducible;
 use feature 'say';
 use Vcf;
+use Getopt::Long;
 
-my $par1_id     = "R500";
-my $par2_id     = "IMB211";
-my @chromosomes = qw(A01 A02 A03 A04 A05 A06 A07 A08 A09 A10);
-my $fa          = "B.rapa_genome_sequence_0830.fa";
-my $cov_min     = 4;
-my $directory   = ".";
+my $par1_id   = "R500";
+my $par2_id   = "IMB211";
+my $seq_list  = "A01,A02,A03,A04,A05,A06,A07,A08,A09,A10";
+my $fa        = "B.rapa_genome_sequence_0830.fa";
+my $cov_min   = 4;
+my $directory = ".";
+
+my $options = GetOptions(
+    "par1_id=s"   => \$par1_id,
+    "par2_id=s"   => \$par2_id,
+    "seq_list=s"  => \$seq_list,
+    "fa=s"        => \$fa,
+    "cov_min=i"   => \$cov_min,
+    "directory=s" => \$directory,
+);
 
 my $vcf_out = Vcf->new();
 $vcf_out->add_columns($par1_id);
@@ -65,6 +75,7 @@ open my $vcf_fh, ">", "$directory/output.vcf";
 print $vcf_fh $vcf_out->format_header();
 
 my %db;
+my @chromosomes = split /,/, $seq_list;
 for my $chr (@chromosomes) {
     open my $polydb_fh, "<", "$directory/snp_master/polyDB.$chr.nr";
     my $header = <$polydb_fh>;
