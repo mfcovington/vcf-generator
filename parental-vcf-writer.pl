@@ -117,11 +117,11 @@ for my $chr ( sort keys %snps ) {
         $out{REF}    = $snps{$chr}{$pos}{'ref'};
         $out{QUAL}   = '.';
         $out{FILTER} = ['.'];
-        my $par1_depth  = $snps{$chr}{$pos}{"$par1_id.par1"};
+        my $par1_depth = $snps{$chr}{$pos}{"$par1_id.par1"};
         my $par2_depth = $snps{$chr}{$pos}{"$par2_id.par2"}
             unless $single_parent;
         next if $par1_depth < $cov_min;
-        next if $par2_depth < $cov_min && !$single_parent;
+        next if !$single_parent && $par2_depth < $cov_min;
         my $total_depth
             = $single_parent ? $par1_depth : $par1_depth + $par2_depth;
         $out{INFO} = { DP => $total_depth };
