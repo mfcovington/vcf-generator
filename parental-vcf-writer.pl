@@ -73,7 +73,7 @@ $vcf_out->add_header_line(
         Description => "Total Depth"
     }
 );
-open my $vcf_fh, ">", "$directory/output.vcf";
+open my $vcf_fh, ">", "$directory/$par1_id-$par2_id.vcf";
 print $vcf_fh $vcf_out->format_header();
 
 my %snps;
