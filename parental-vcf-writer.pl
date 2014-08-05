@@ -79,7 +79,7 @@ for my $file (@snp_files) {
     open my $polydb_fh, "<", "$file";
     my $header = <$polydb_fh>;
     while (<$polydb_fh>) {
-        my ( $chr_id, $pos, $ref, $alt, $genotype ) = split /\t/, $_;
+        my ( $chr, $pos, $ref, $alt, $genotype ) = split /\t/, $_;
         if ( $ref eq 'INS' ) {
             next;    # skipping indels for now
         }
