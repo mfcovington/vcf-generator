@@ -18,6 +18,7 @@ my $par2_id   = "IMB211";
 my $fa        = "B.rapa_genome_sequence_0830.fa";
 my $cov_min   = 4;
 my $directory = ".";
+my $single_parent;
 
 my $options = GetOptions(
     "par1_id=s"     => \$par1_id,
