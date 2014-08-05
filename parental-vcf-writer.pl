@@ -20,18 +20,19 @@ my $cov_min   = 4;
 my $directory = ".";
 
 my $options = GetOptions(
-    "par1_id=s"   => \$par1_id,
-    "par2_id=s"   => \$par2_id,
-    "fa=s"        => \$fa,
-    "cov_min=i"   => \$cov_min,
-    "directory=s" => \$directory,
+    "par1_id=s"     => \$par1_id,
+    "par2_id=s"     => \$par2_id,
+    "fa=s"          => \$fa,
+    "cov_min=i"     => \$cov_min,
+    "directory=s"   => \$directory,
+    "single_parent" => \$single_parent,
 );
 
 my @snp_files = @ARGV;
 
 my $vcf_out = Vcf->new();
 $vcf_out->add_columns($par1_id);
-$vcf_out->add_columns($par2_id);
+$vcf_out->add_columns($par2_id) unless $single_parent;
 $vcf_out->add_header_line(
     {
         key   => 'source',
@@ -99,12 +100,13 @@ for my $file (@snp_files) {
 
 for my $chr ( sort keys %snps ) {
     my $par1_file = "$directory/genotyped/$par1_id.$chr.genotyped.nr";
-    my $par2_file = "$directory/genotyped/$par2_id.$chr.genotyped.nr";
+    my $par2_file = "$directory/genotyped/$par2_id.$chr.genotyped.nr"
+        unless $single_parent;
     open my $par1_fh, "<", $par1_file;
-    open my $par2_fh, "<", $par2_file;
+    open my $par2_fh, "<", $par2_file unless $single_parent;
 
     add_sample( $par1_id, $par1_fh );
-    add_sample( $par2_id, $par2_fh );
+    add_sample( $par2_id, $par2_fh ) unless $single_parent;
 
     for my $pos ( sort { $a <=> $b } keys $snps{$chr} ) {
         my %out;
@@ -115,15 +117,19 @@ for my $chr ( sort keys %snps ) {
         $out{QUAL}   = '.';
         $out{FILTER} = ['.'];
         my $par1_depth  = $snps{$chr}{$pos}{"$par1_id.par1"};
-        my $par2_depth  = $snps{$chr}{$pos}{"$par2_id.par2"};
-        next if $par1_depth < $cov_min || $par2_depth < $cov_min;
-        my $total_depth = $par1_depth + $par2_depth;
+        my $par2_depth = $snps{$chr}{$pos}{"$par2_id.par2"}
+            unless $single_parent;
+        next if $par1_depth < $cov_min;
+        next if $par2_depth < $cov_min && !$single_parent;
+        my $total_depth
+            = $single_parent ? $par1_depth : $par1_depth + $par2_depth;
         $out{INFO} = { DP => $total_depth };
         $out{FORMAT} = [ 'GT', 'DP' ];
         $out{gtypes}{$par1_id}{GT} = get_genotype( $par1_id, $chr, $pos );
-        $out{gtypes}{$par2_id}{GT} = get_genotype( $par2_id, $chr, $pos );
+        $out{gtypes}{$par2_id}{GT} = get_genotype( $par2_id, $chr, $pos )
+            unless $single_parent;
         $out{gtypes}{$par1_id}{DP} = $par1_depth;
-        $out{gtypes}{$par2_id}{DP} = $par2_depth;
+        $out{gtypes}{$par2_id}{DP} = $par2_depth unless $single_parent;
 
         $vcf_out->format_genotype_strings( \%out );
         print $vcf_fh $vcf_out->format_line( \%out );
