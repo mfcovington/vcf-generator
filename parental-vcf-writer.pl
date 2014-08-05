@@ -15,7 +15,6 @@ use Getopt::Long;
 
 my $par1_id   = "R500";
 my $par2_id   = "IMB211";
-my $seq_list  = "A01,A02,A03,A04,A05,A06,A07,A08,A09,A10";
 my $fa        = "B.rapa_genome_sequence_0830.fa";
 my $cov_min   = 4;
 my $directory = ".";
@@ -23,11 +22,12 @@ my $directory = ".";
 my $options = GetOptions(
     "par1_id=s"   => \$par1_id,
     "par2_id=s"   => \$par2_id,
-    "seq_list=s"  => \$seq_list,
     "fa=s"        => \$fa,
     "cov_min=i"   => \$cov_min,
     "directory=s" => \$directory,
 );
+
+my @snp_files = @ARGV;
 
 my $vcf_out = Vcf->new();
 $vcf_out->add_columns($par1_id);
@@ -74,10 +74,9 @@ $vcf_out->add_header_line(
 open my $vcf_fh, ">", "$directory/output.vcf";
 print $vcf_fh $vcf_out->format_header();
 
-my %db;
-my @chromosomes = split /,/, $seq_list;
-for my $chr (@chromosomes) {
-    open my $polydb_fh, "<", "$directory/snp_master/polyDB.$chr.nr";
+my %snps;
+for my $file (@snp_files) {
+    open my $polydb_fh, "<", "$file";
     my $header = <$polydb_fh>;
     while (<$polydb_fh>) {
         my ( $chr_id, $pos, $ref, $alt, $genotype ) = split /\t/, $_;
@@ -88,7 +87,7 @@ for my $chr (@chromosomes) {
             next;    # skipping indels for now
         }
         else {
-            $db{$chr}{$pos} = {
+            $snps{$chr}{$pos} = {
                 'chr' => $chr,
                 'ref' => $ref,
                 'alt' => $alt,
@@ -96,7 +95,9 @@ for my $chr (@chromosomes) {
             };
         }
     }
+}
 
+for my $chr ( sort keys %snps ) {
     my $par1_file = "$directory/genotyped/$par1_id.$chr.genotyped.nr";
     my $par2_file = "$directory/genotyped/$par2_id.$chr.genotyped.nr";
     open my $par1_fh, "<", $par1_file;
@@ -105,16 +106,16 @@ for my $chr (@chromosomes) {
     add_sample( $par1_id, $par1_fh );
     add_sample( $par2_id, $par2_fh );
 
-    for my $pos ( sort { $a <=> $b } keys $db{$chr} ) {
+    for my $pos ( sort { $a <=> $b } keys $snps{$chr} ) {
         my %out;
         $out{CHROM}  = $chr;
         $out{POS}    = $pos;
-        $out{ID}     = "$db{$chr}{$pos}{'gen'}.$pos.snp";
-        $out{REF}    = $db{$chr}{$pos}{'ref'};
+        $out{ID}     = "$snps{$chr}{$pos}{'gen'}.$pos.snp";
+        $out{REF}    = $snps{$chr}{$pos}{'ref'};
         $out{QUAL}   = '.';
         $out{FILTER} = ['.'];
-        my $par1_depth  = $db{$chr}{$pos}{"$par1_id.par1"};
-        my $par2_depth  = $db{$chr}{$pos}{"$par2_id.par2"};
+        my $par1_depth  = $snps{$chr}{$pos}{"$par1_id.par1"};
+        my $par2_depth  = $snps{$chr}{$pos}{"$par2_id.par2"};
         next if $par1_depth < $cov_min || $par2_depth < $cov_min;
         my $total_depth = $par1_depth + $par2_depth;
         $out{INFO} = { DP => $total_depth };
@@ -135,17 +136,17 @@ sub add_sample {
     while (<$fh>) {
         chomp $_;
         my ( $chr, $pos, $par1, $par2, $tot ) = split /\t/, $_;
-        next unless exists $db{$chr}{$pos};
+        next unless exists $snps{$chr}{$pos};
         $count++;
-        $db{$chr}{$pos}{"$sample.par1"} = $par1;
-        $db{$chr}{$pos}{"$sample.par2"} = $par2;
-        $db{$chr}{$pos}{"$sample.tot"}  = $tot;
+        $snps{$chr}{$pos}{"$sample.par1"} = $par1;
+        $snps{$chr}{$pos}{"$sample.par2"} = $par2;
+        $snps{$chr}{$pos}{"$sample.tot"}  = $tot;
     }
 }
 
 sub get_genotype {
     my ( $id, $chr, $pos ) = @_;
-    my $ref = $db{$chr}{$pos}{'ref'};
-    my $alt = $db{$chr}{$pos}{'alt'};
-    return $db{$chr}{$pos}{'gen'} eq $id ? "$alt/$alt" : "$ref/$ref";
+    my $ref = $snps{$chr}{$pos}{'ref'};
+    my $alt = $snps{$chr}{$pos}{'alt'};
+    return $snps{$chr}{$pos}{'gen'} eq $id ? "$alt/$alt" : "$ref/$ref";
 }
